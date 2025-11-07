@@ -8,13 +8,13 @@ app:
 images:
   frontend:
     repository: docker.io/guscontre1/ocp-dog-frontend
-    tag: "3"
+    tag: "4"
   frontendApi:
     repository: docker.io/guscontre1/ocp-dog-frontend-api
-    tag: "2"
+    tag: "3"
   backendApi:
     repository: docker.io/guscontre1/ocp-dog-backend-api
-    tag: "6"
+    tag: "7"
   database:
     repository: docker.io/library/postgres
     tag: "15"
@@ -29,7 +29,7 @@ service:
   frontend:
     type: ClusterIP
     port: 80
-    targetPort: 3000
+    targetPort: 8080
   frontendApi:
     type: ClusterIP
     port: 5001
