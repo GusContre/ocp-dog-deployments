@@ -8,10 +8,10 @@ app:
 images:
   frontend:
     repository: docker.io/guscontre1/ocp-dog-frontend
-    tag: "4"
+    tag: "5"
   frontendApi:
     repository: docker.io/guscontre1/ocp-dog-frontend-api
-    tag: "3"
+    tag: "4"
   backendApi:
     repository: docker.io/guscontre1/ocp-dog-backend-api
     tag: "7"
@@ -51,8 +51,8 @@ route:
 
 config:
   frontendApiUrl: http://ocp-dog-frontend-api.apps.rm1.0a51.p1.openshiftapps.com
-  backendApiUrl: http://ocp-dog-backend-api:5002/dog
-  databaseHost: ocp-dog-database
+  backendApiUrl: http://ocp-dog-backend-api.guscontre-dev.svc.cluster.local:5002/dog
+  databaseHost: ocp-dog-database.guscontre-dev.svc.cluster.local
   databaseName: ocp_dog
 
 secrets:
@@ -66,7 +66,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
-pvc:
-  storageClassName: managed-nfs-storage
-  size: 1Gi

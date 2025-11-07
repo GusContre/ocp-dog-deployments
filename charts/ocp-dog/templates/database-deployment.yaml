@@ -46,5 +46,4 @@ spec:
               name: data
       volumes:
         - name: data
-          persistentVolumeClaim:
-            claimName: {{ include "ocp-dog.fullname" . }}-db
+          emptyDir: {}
