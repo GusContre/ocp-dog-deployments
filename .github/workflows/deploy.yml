@@ -1,0 +1,43 @@
+name: Deploy ocp-dog
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+env:
+  CHART_PATH: charts/ocp-dog
+  RELEASE_NAME: ocp-dog
+  OPENSHIFT_NAMESPACE: guscontre-dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install oc CLI
+        run: |
+          curl -sSLo oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz
+          tar -xzf oc.tar.gz oc kubectl
+          sudo mv oc kubectl /usr/local/bin/
+          oc version --client
+
+      - name: Install Helm
+        run: |
+          curl -sSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          helm version --short
+
+      - name: Login to OpenShift
+        uses: redhat-actions/oc-login@v1
+        with:
+          openshift_server_url: https://api.rm1.0a51.p1.openshiftapps.com:6443
+          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
+          insecure_skip_tls_verify: true
+          namespace: ${{ env.OPENSHIFT_NAMESPACE }}
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install "$RELEASE_NAME" "$CHART_PATH" -f "$CHART_PATH/values.yaml"

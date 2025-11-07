@@ -1,0 +1,17 @@
+apiVersion: v2
+name: ocp-dog
+version: 0.1.0
+appVersion: "1.0.0"
+description: Helm chart para desplegar el ecosistema ocp-dog en OpenShift
+keywords:
+  - openshift
+  - dogs
+  - microservices
+  - helm
+home: https://github.com/your-org/ocp-dog-deployments
+sources:
+  - https://github.com/your-org/ocp-dog-deployments
+maintainers:
+  - name: ocp-dog-team
+    email: team@example.com
+dependencies: []

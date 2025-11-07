@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ocp-dog.fullname" . }}-database
+  labels:
+    {{- include "ocp-dog.labels" . | nindent 4 }}
+    tier: database
+spec:
+  replicas: {{ .Values.replicaCount.database }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+      component: database
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}
+        component: database
+        tier: database
+    spec:
+      containers:
+        - name: database
+          image: {{ include "ocp-dog.image" .Values.images.database }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ .Values.service.database.port }}
+              name: tcp
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "ocp-dog.fullname" . }}-config
+                  key: DB_NAME
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ocp-dog.fullname" . }}-db
+                  key: DB_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ocp-dog.fullname" . }}-db
+                  key: DB_PASS
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "ocp-dog.fullname" . }}-db

@@ -1,0 +1,68 @@
+nameOverride: ""
+fullnameOverride: ""
+
+app:
+  name: ocp-dog
+  namespace: guscontre-dev
+
+images:
+  frontend:
+    repository: docker.io/guscontre1/ocp-dog-frontend
+    tag: "1"
+  frontendApi:
+    repository: docker.io/guscontre1/ocp-dog-frontend-api
+    tag: "2"
+  backendApi:
+    repository: docker.io/guscontre1/ocp-dog-backend-api
+    tag: "6"
+  database:
+    repository: docker.io/library/postgres
+    tag: "15"
+
+replicaCount:
+  frontend: 2
+  frontendApi: 2
+  backendApi: 2
+  database: 1
+
+service:
+  frontend:
+    type: ClusterIP
+    port: 80
+    targetPort: 3000
+  frontendApi:
+    type: ClusterIP
+    port: 5001
+    targetPort: 5001
+  backendApi:
+    type: ClusterIP
+    port: 5002
+    targetPort: 5002
+  database:
+    port: 5432
+
+route:
+  host: ocp-dog-frontend.apps.rm1.0a51.p1.openshiftapps.com
+  tlsTermination: edge
+
+config:
+  frontendApiUrl: http://ocp-dog-frontend-api:5001/dog
+  backendApiUrl: http://ocp-dog-backend-api:5002/api
+  databaseHost: ocp-dog-database
+  databaseName: ocp_dog
+
+secrets:
+  databaseUser: ocp_dog_user
+  databasePassword: super-secret-pass
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+pvc:
+  storageClassName: managed-nfs-storage
+  size: 1Gi

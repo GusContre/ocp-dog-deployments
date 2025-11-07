@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ocp-dog.fullname" . }}-frontend-api
+  labels:
+    {{- include "ocp-dog.labels" . | nindent 4 }}
+    tier: api
+spec:
+  replicas: {{ .Values.replicaCount.frontendApi }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+      component: frontend-api
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}
+        component: frontend-api
+        tier: api
+    spec:
+      containers:
+        - name: frontend-api
+          image: {{ include "ocp-dog.image" .Values.images.frontendApi }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ .Values.service.frontendApi.targetPort }}
+              name: http
+          env:
+            - name: BACKEND_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "ocp-dog.fullname" . }}-config
+                  key: BACKEND_API_URL
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30

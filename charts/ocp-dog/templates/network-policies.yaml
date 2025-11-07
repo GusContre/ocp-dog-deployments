@@ -1,0 +1,149 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ocp-dog.fullname" . }}-default-deny
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ocp-dog.fullname" . }}-frontend
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+      component: frontend
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              network.openshift.io/policy-group: ingress
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.frontend.port }}
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: {{ .Values.app.name }}
+              component: frontend-api
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.frontendApi.port }}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ocp-dog.fullname" . }}-frontend-api
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+      component: frontend-api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: {{ .Values.app.name }}
+              component: frontend
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.frontendApi.port }}
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: {{ .Values.app.name }}
+              component: backend-api
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.backendApi.port }}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ocp-dog.fullname" . }}-backend-api
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+      component: backend-api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: {{ .Values.app.name }}
+              component: frontend-api
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.backendApi.port }}
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: {{ .Values.app.name }}
+              component: database
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.database.port }}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ocp-dog.fullname" . }}-database
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+      component: database
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: {{ .Values.app.name }}
+              component: backend-api
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.database.port }}
