@@ -6,13 +6,15 @@ metadata:
     {{- include "ocp-dog.labels" . | nindent 4 }}
     tier: frontend
 spec:
-  host: {{ .Values.route.host }}
+  host: {{ .Values.route.frontend.host }}
   to:
     kind: Service
     name: {{ include "ocp-dog.fullname" . }}-frontend
     weight: 100
   port:
     targetPort: http
+  {{- if .Values.route.frontend.tlsTermination }}
   tls:
-    termination: {{ .Values.route.tlsTermination }}
+    termination: {{ .Values.route.frontend.tlsTermination }}
+  {{- end }}
   wildcardPolicy: None

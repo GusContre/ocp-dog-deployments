@@ -42,12 +42,16 @@ service:
     port: 5432
 
 route:
-  host: ocp-dog-frontend.apps.rm1.0a51.p1.openshiftapps.com
-  tlsTermination: edge
+  frontend:
+    host: ocp-dog-frontend.apps.rm1.0a51.p1.openshiftapps.com
+    tlsTermination:
+  frontendApi:
+    host: ocp-dog-frontend-api.apps.rm1.0a51.p1.openshiftapps.com
+    tlsTermination:
 
 config:
-  frontendApiUrl: http://ocp-dog-frontend-api:5001/dog
-  backendApiUrl: http://ocp-dog-backend-api:5002/api
+  frontendApiUrl: http://ocp-dog-frontend-api.apps.rm1.0a51.p1.openshiftapps.com
+  backendApiUrl: http://ocp-dog-backend-api:5002/dog
   databaseHost: ocp-dog-database
   databaseName: ocp_dog
 

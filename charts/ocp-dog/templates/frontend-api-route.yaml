@@ -1,0 +1,20 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "ocp-dog.fullname" . }}-frontend-api
+  labels:
+    {{- include "ocp-dog.labels" . | nindent 4 }}
+    tier: api
+spec:
+  host: {{ .Values.route.frontendApi.host }}
+  to:
+    kind: Service
+    name: {{ include "ocp-dog.fullname" . }}-frontend-api
+    weight: 100
+  port:
+    targetPort: http
+  {{- if .Values.route.frontendApi.tlsTermination }}
+  tls:
+    termination: {{ .Values.route.frontendApi.tlsTermination }}
+  {{- end }}
+  wildcardPolicy: None
