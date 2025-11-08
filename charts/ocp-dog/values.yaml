@@ -92,7 +92,7 @@ workloads:
   frontendApi:
     containerName: frontend-api
     env:
-      - name: BACKEND_API_URL
+      - name: BACKEND_URL
         configMapKey: BACKEND_API_URL
     readinessProbe:
       path: /healthz
