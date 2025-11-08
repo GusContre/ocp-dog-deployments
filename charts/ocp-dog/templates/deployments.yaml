@@ -59,7 +59,7 @@
       (dict "name" "POSTGRES_PASSWORD" "type" "secret" "key" "DB_PASS" "secretSuffix" "db")
     )
   )
-) -}}
+-}}
 {{- $lastIndex := sub (len $workloads) 1 -}}
 {{- range $idx, $workload := $workloads }}
 apiVersion: apps/v1
