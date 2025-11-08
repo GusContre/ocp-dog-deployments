@@ -8,7 +8,7 @@ app:
 images:
   frontend:
     repository: docker.io/guscontre1/ocp-dog-frontend
-    tag: "6"
+    tag: "7"
   frontendApi:
     repository: docker.io/guscontre1/ocp-dog-frontend-api
     tag: "6"
@@ -158,5 +158,42 @@ tolerations: []
 affinity: {}
 
 networkPolicy:
+  enabled: true
   defaultDeny: true
-  allowDns: true
+  dns:
+    namespaceLabel: kubernetes.io/metadata.name
+    namespaceValue: openshift-dns
+  order:
+    - frontend
+    - frontendApi
+    - backendApi
+    - database
+  workloads:
+    frontend:
+      ingress:
+        - routes: true
+      egress:
+        - toComponents:
+            - frontendApi
+    frontendApi:
+      ingress:
+        - fromComponents:
+            - frontend
+        - routes: true
+      egress:
+        - toComponents:
+            - backendApi
+        - dns: true
+    backendApi:
+      ingress:
+        - fromComponents:
+            - frontendApi
+      egress:
+        - toComponents:
+            - database
+        - dns: true
+        - internet: true
+    database:
+      ingress:
+        - fromComponents:
+            - backendApi

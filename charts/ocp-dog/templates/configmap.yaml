@@ -10,11 +10,11 @@ metadata:
     heritage: Helm
 {{- $ns := default .Values.app.namespace .Release.Namespace }}
 {{- $fullname := include "ocp-dog.fullname" . }}
-{{- $frontendRouteDefault := printf "http://%s" .Values.route.frontendApi.host }}
+{{- $frontendSvcDefault := printf "http://%s-frontend-api.%s.svc.cluster.local:%d" $fullname $ns (int .Values.service.frontendApi.port) }}
 {{- $backendSvcDefault := printf "http://%s-backend-api.%s.svc.cluster.local:%d/dog" $fullname $ns (int .Values.service.backendApi.port) }}
 {{- $databaseHostDefault := printf "%s-database.%s.svc.cluster.local" $fullname $ns }}
 data:
-  FRONTEND_API_URL: {{ default $frontendRouteDefault .Values.config.frontendApiUrl | quote }}
+  FRONTEND_API_URL: {{ default $frontendSvcDefault .Values.config.frontendApiUrl | quote }}
   BACKEND_API_URL: {{ default $backendSvcDefault .Values.config.backendApiUrl | quote }}
   DB_HOST: {{ default $databaseHostDefault .Values.config.databaseHost | quote }}
   DB_NAME: {{ .Values.config.databaseName | quote }}

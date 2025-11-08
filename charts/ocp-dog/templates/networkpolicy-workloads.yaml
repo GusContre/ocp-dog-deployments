@@ -1,0 +1,94 @@
+{{- if and .Values.networkPolicy.enabled .Values.networkPolicy.workloads }}
+{{- $root := . }}
+{{- $order := .Values.networkPolicy.order | default (keys .Values.networkPolicy.workloads) }}
+{{- $last := sub (len $order) 1 }}
+{{- range $idx, $name := $order }}
+{{- $cfg := index $root.Values.networkPolicy.workloads $name }}
+{{- if not $cfg }}{{ continue }}{{- end }}
+{{- $svc := index $root.Values.service $name }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ocp-dog.fullname" $root }}-{{ default $svc.component $cfg.component | default $name | replace "_" "-" }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ $root.Values.app.name }}
+      component: {{ default $svc.component $cfg.component }}
+  policyTypes:
+    - Ingress
+    - Egress
+{{- if $cfg.ingress }}
+  ingress:
+    {{- range $rule := $cfg.ingress }}
+    - {{- if or $rule.fromComponents $rule.routes }}
+      from:
+        {{- if $rule.routes }}
+        - namespaceSelector:
+            matchLabels:
+              network.openshift.io/policy-group: ingress
+        {{- end }}
+        {{- range $from := $rule.fromComponents }}
+        - podSelector:
+            matchLabels:
+              app: {{ $root.Values.app.name }}
+              component: {{ (index $root.Values.service $from).component }}
+        {{- end }}
+      {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ $svc.port }}
+    {{- end }}
+{{- else }}
+  ingress: []
+{{- end }}
+{{- if $cfg.egress }}
+  egress:
+    {{- range $rule := $cfg.egress }}
+    - {{- if $rule.toComponents }}
+      to:
+        {{- range $to := $rule.toComponents }}
+        - podSelector:
+            matchLabels:
+              app: {{ $root.Values.app.name }}
+              component: {{ (index $root.Values.service $to).component }}
+        {{- end }}
+      {{- else if $rule.dns }}
+      to:
+        - namespaceSelector:
+            matchLabels:
+              {{ default "kubernetes.io/metadata.name" $root.Values.networkPolicy.dns.namespaceLabel }}: {{ default "openshift-dns" $root.Values.networkPolicy.dns.namespaceValue }}
+      {{- else if $rule.internet }}
+      to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      {{- end }}
+      ports:
+        {{- if $rule.dns }}
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+        {{- else if $rule.internet }}
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
+        {{- else if $rule.toComponents }}
+        {{- range $to := $rule.toComponents }}
+        - protocol: TCP
+          port: {{ (index $root.Values.service $to).port }}
+        {{- end }}
+        {{- else }}
+        - protocol: TCP
+          port: {{ $svc.port }}
+        {{- end }}
+    {{- end }}
+{{- else }}
+  egress: []
+{{- end }}
+{{- if lt $idx $last }}
+---
+{{- end }}
+{{- end }}
+{{- end }}
