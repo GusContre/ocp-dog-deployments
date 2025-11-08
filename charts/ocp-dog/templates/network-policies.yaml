@@ -65,6 +65,9 @@ spec:
             matchLabels:
               app: {{ .Values.app.name }}
               component: frontend
+        - namespaceSelector:
+            matchLabels:
+              network.openshift.io/policy-group: ingress
       ports:
         - protocol: TCP
           port: {{ .Values.service.frontendApi.port }}
