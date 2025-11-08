@@ -73,6 +73,20 @@ spec:
           port: {{ .Values.service.frontendApi.port }}
   egress:
     - to:
+        - namespaceSelector: {}
+          podSelector: {}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.backendApi.port }}
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+    - to:
         - podSelector:
             matchLabels:
               app: {{ .Values.app.name }}
