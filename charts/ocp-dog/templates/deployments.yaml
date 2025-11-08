@@ -52,6 +52,19 @@ spec:
               {{- end }}
             {{- end }}
 {{- end }}
+{{- with $workload.volumeMounts }}
+          volumeMounts:
+            {{- range . }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if hasKey . "readOnly" }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+            {{- end }}
+{{- end }}
 {{- with $workload.readinessProbe }}
           readinessProbe:
             httpGet:
@@ -75,6 +88,32 @@ spec:
             {{- if hasKey . "periodSeconds" }}
             periodSeconds: {{ .periodSeconds }}
             {{- end }}
+{{- end }}
+{{- with $workload.volumes }}
+      volumes:
+        {{- range . }}
+        - name: {{ .name }}
+          {{- if .configMap }}
+          configMap:
+            name: {{ .configMap.name }}
+          {{- else if .secret }}
+          secret:
+            secretName: {{ .secret.name }}
+          {{- else if .persistentVolumeClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .persistentVolumeClaim.claimName }}
+          {{- else if .emptyDir }}
+          emptyDir:
+            {{- if .emptyDir.medium }}
+            medium: {{ .emptyDir.medium }}
+            {{- end }}
+            {{- if .emptyDir.sizeLimit }}
+            sizeLimit: {{ .emptyDir.sizeLimit }}
+            {{- end }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- end }}
 {{- end }}
 {{- if lt $idx $last }}
 ---

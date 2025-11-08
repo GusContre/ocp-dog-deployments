@@ -16,8 +16,8 @@ images:
     repository: docker.io/guscontre1/ocp-dog-backend-api
     tag: "7"
   database:
-    repository: docker.io/library/postgres
-    tag: "15"
+    repository: quay.io/sclorg/postgresql-15-c9s
+    tag: latest
 
 replicaCount:
   frontend: 2
@@ -130,12 +130,12 @@ workloads:
   database:
     containerName: database
     env:
-      - name: POSTGRES_DB
+      - name: POSTGRESQL_DATABASE
         configMapKey: DB_NAME
-      - name: POSTGRES_USER
+      - name: POSTGRESQL_USER
         secretKey: DB_USER
         secretNameSuffix: db
-      - name: POSTGRES_PASSWORD
+      - name: POSTGRESQL_PASSWORD
         secretKey: DB_PASS
         secretNameSuffix: db
 
