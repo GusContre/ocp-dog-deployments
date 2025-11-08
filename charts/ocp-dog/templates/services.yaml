@@ -1,0 +1,26 @@
+{{- $svcOrder := list "frontend" "frontendApi" "backendApi" "database" -}}
+{{- $lastIndex := sub (len $svcOrder) 1 -}}
+{{- $root := . -}}
+{{- range $idx, $name := $svcOrder }}
+{{- $svc := index $root.Values.service $name }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ocp-dog.fullname" $root }}-{{ $svc.component }}
+  labels:
+    {{- include "ocp-dog.labels" $root | nindent 4 }}
+    tier: {{ $svc.tier }}
+spec:
+  type: {{ default "ClusterIP" $svc.type }}
+  selector:
+    app: {{ $root.Values.app.name }}
+    component: {{ $svc.component }}
+  ports:
+    - port: {{ $svc.port }}
+      targetPort: {{ $svc.targetPort }}
+      protocol: {{ default "TCP" $svc.protocol }}
+      name: {{ default "http" $svc.portName }}
+{{- if lt $idx $lastIndex }}
+---
+{{- end }}
+{{- end }}

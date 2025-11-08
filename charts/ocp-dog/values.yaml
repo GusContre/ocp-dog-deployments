@@ -11,7 +11,7 @@ images:
     tag: "5"
   frontendApi:
     repository: docker.io/guscontre1/ocp-dog-frontend-api
-    tag: "4"
+    tag: "5"
   backendApi:
     repository: docker.io/guscontre1/ocp-dog-backend-api
     tag: "7"
@@ -30,24 +30,48 @@ service:
     type: ClusterIP
     port: 80
     targetPort: 8080
+    component: frontend
+    tier: frontend
+    portName: http
+    protocol: TCP
   frontendApi:
     type: ClusterIP
     port: 5001
     targetPort: 5001
+    component: frontend-api
+    tier: api
+    portName: http
+    protocol: TCP
   backendApi:
     type: ClusterIP
     port: 5002
     targetPort: 5002
+    component: backend-api
+    tier: backend
+    portName: http
+    protocol: TCP
   database:
+    type: ClusterIP
     port: 5432
+    targetPort: 5432
+    component: database
+    tier: database
+    portName: tcp
+    protocol: TCP
 
 route:
   frontend:
+    component: frontend
+    tier: frontend
     host: ocp-dog-frontend.apps.rm1.0a51.p1.openshiftapps.com
     tlsTermination:
+    portName: http
   frontendApi:
+    component: frontend-api
+    tier: api
     host: ocp-dog-frontend-api.apps.rm1.0a51.p1.openshiftapps.com
     tlsTermination:
+    portName: http
 
 config:
   frontendApiUrl: http://ocp-dog-frontend-api.apps.rm1.0a51.p1.openshiftapps.com
