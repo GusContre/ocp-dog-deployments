@@ -14,7 +14,7 @@ images:
     tag: "6"
   backendApi:
     repository: docker.io/guscontre1/ocp-dog-backend-api
-    tag: "9"
+    tag: "10"
   database:
     repository: quay.io/sclorg/postgresql-15-c9s
     tag: latest
