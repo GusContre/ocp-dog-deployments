@@ -8,7 +8,7 @@ app:
 images:
   frontend:
     repository: docker.io/guscontre1/ocp-dog-frontend
-    tag: "8"
+    tag: "9"
   frontendApi:
     repository: docker.io/guscontre1/ocp-dog-frontend-api
     tag: "6"
