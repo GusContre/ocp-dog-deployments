@@ -15,8 +15,10 @@ spec:
             matchLabels:
               {{ default "kubernetes.io/metadata.name" .Values.networkPolicy.dns.namespaceLabel }}: {{ default "openshift-dns" .Values.networkPolicy.dns.namespaceValue }}
       ports:
+        {{- range $port := (default (list 53 5353) .Values.networkPolicy.dns.ports) }}
         - protocol: UDP
-          port: 53
+          port: {{ $port }}
         - protocol: TCP
-          port: 53
+          port: {{ $port }}
+        {{- end }}
 {{- end }}

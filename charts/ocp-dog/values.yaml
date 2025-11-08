@@ -163,6 +163,9 @@ networkPolicy:
   dns:
     namespaceLabel: kubernetes.io/metadata.name
     namespaceValue: openshift-dns
+    ports:
+      - 53
+      - 5353
   order:
     - frontend
     - frontendApi
