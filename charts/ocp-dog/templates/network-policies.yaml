@@ -80,6 +80,7 @@ spec:
       ports:
         - protocol: TCP
           port: {{ .Values.service.backendApi.port }}
+    - {}
     - to:
         - namespaceSelector:
             matchLabels:
