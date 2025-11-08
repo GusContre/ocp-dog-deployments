@@ -1,21 +1,20 @@
-{{- $routesOrder := list "frontend" "frontendApi" -}}
+{{- $order := list "frontend" "frontendApi" -}}
+{{- $last := sub (len $order) 1 -}}
 {{- $root := . -}}
-{{- $lastIndex := sub (len $routesOrder) 1 -}}
-{{- range $idx, $name := $routesOrder }}
+{{- range $idx, $name := $order }}
 {{- $route := index $root.Values.route $name }}
-{{- $component := default $name $route.component }}
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: {{ include "ocp-dog.fullname" $root }}-{{ $component }}
+  name: {{ include "ocp-dog.fullname" $root }}-{{ $route.component }}
   labels:
     {{- include "ocp-dog.labels" $root | nindent 4 }}
-    tier: {{ default "frontend" $route.tier }}
+    tier: {{ $route.tier }}
 spec:
   host: {{ $route.host }}
   to:
     kind: Service
-    name: {{ include "ocp-dog.fullname" $root }}-{{ $component }}
+    name: {{ include "ocp-dog.fullname" $root }}-{{ $route.component }}
     weight: 100
   port:
     targetPort: {{ default "http" $route.portName }}
@@ -24,7 +23,7 @@ spec:
     termination: {{ $route.tlsTermination }}
   {{- end }}
   wildcardPolicy: None
-{{- if lt $idx $lastIndex }}
+{{- if lt $idx $last }}
 ---
 {{- end }}
 {{- end }}

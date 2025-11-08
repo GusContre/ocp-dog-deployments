@@ -1,7 +1,7 @@
-{{- $svcOrder := list "frontend" "frontendApi" "backendApi" "database" -}}
-{{- $lastIndex := sub (len $svcOrder) 1 -}}
+{{- $order := list "frontend" "frontendApi" "backendApi" "database" -}}
+{{- $last := sub (len $order) 1 -}}
 {{- $root := . -}}
-{{- range $idx, $name := $svcOrder }}
+{{- range $idx, $name := $order }}
 {{- $svc := index $root.Values.service $name }}
 apiVersion: v1
 kind: Service
@@ -20,7 +20,7 @@ spec:
       targetPort: {{ $svc.targetPort }}
       protocol: {{ default "TCP" $svc.protocol }}
       name: {{ default "http" $svc.portName }}
-{{- if lt $idx $lastIndex }}
+{{- if lt $idx $last }}
 ---
 {{- end }}
 {{- end }}

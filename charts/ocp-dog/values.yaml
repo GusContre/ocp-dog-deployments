@@ -73,6 +73,72 @@ route:
     tlsTermination:
     portName: http
 
+workloads:
+  frontend:
+    containerName: frontend
+    env:
+      - name: FRONTEND_API_URL
+        configMapKey: FRONTEND_API_URL
+    readinessProbe:
+      path: /healthz
+      port: http
+      initialDelaySeconds: 10
+      periodSeconds: 10
+    livenessProbe:
+      path: /healthz
+      port: http
+      initialDelaySeconds: 30
+      periodSeconds: 30
+  frontendApi:
+    containerName: frontend-api
+    env:
+      - name: BACKEND_API_URL
+        configMapKey: BACKEND_API_URL
+    readinessProbe:
+      path: /healthz
+      port: http
+      initialDelaySeconds: 10
+      periodSeconds: 10
+    livenessProbe:
+      path: /healthz
+      port: http
+      initialDelaySeconds: 30
+      periodSeconds: 30
+  backendApi:
+    containerName: backend-api
+    env:
+      - name: DB_HOST
+        configMapKey: DB_HOST
+      - name: DB_NAME
+        configMapKey: DB_NAME
+      - name: DB_USER
+        secretKey: DB_USER
+        secretNameSuffix: db
+      - name: DB_PASS
+        secretKey: DB_PASS
+        secretNameSuffix: db
+    readinessProbe:
+      path: /healthz
+      port: http
+      initialDelaySeconds: 15
+      periodSeconds: 10
+    livenessProbe:
+      path: /healthz
+      port: http
+      initialDelaySeconds: 45
+      periodSeconds: 30
+  database:
+    containerName: database
+    env:
+      - name: POSTGRES_DB
+        configMapKey: DB_NAME
+      - name: POSTGRES_USER
+        secretKey: DB_USER
+        secretNameSuffix: db
+      - name: POSTGRES_PASSWORD
+        secretKey: DB_PASS
+        secretNameSuffix: db
+
 config:
   frontendApiUrl: http://ocp-dog-frontend-api.apps.rm1.0a51.p1.openshiftapps.com
   backendApiUrl: http://ocp-dog-backend-api.guscontre-dev.svc.cluster.local:5002/dog

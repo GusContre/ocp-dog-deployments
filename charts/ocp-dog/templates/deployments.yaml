@@ -1,140 +1,82 @@
+{{- $order := list "frontend" "frontendApi" "backendApi" "database" -}}
+{{- $last := sub (len $order) 1 -}}
 {{- $root := . -}}
-{{- $workloads := list
-  (dict
-    "name" "frontend"
-    "component" "frontend"
-    "tier" "frontend"
-    "replicas" $root.Values.replicaCount.frontend
-    "image" (include "ocp-dog.image" $root.Values.images.frontend)
-    "port" $root.Values.service.frontend.targetPort
-    "portName" "http"
-    "env" (list
-      (dict "name" "FRONTEND_API_URL" "type" "config" "key" "FRONTEND_API_URL")
-    )
-    "readiness" (dict "path" "/healthz" "port" "http" "initialDelaySeconds" 10 "periodSeconds" 10)
-    "liveness" (dict "path" "/healthz" "port" "http" "initialDelaySeconds" 30 "periodSeconds" 30)
-  )
-  (dict
-    "name" "frontend-api"
-    "component" "frontend-api"
-    "tier" "api"
-    "replicas" $root.Values.replicaCount.frontendApi
-    "image" (include "ocp-dog.image" $root.Values.images.frontendApi)
-    "port" $root.Values.service.frontendApi.targetPort
-    "portName" "http"
-    "env" (list
-      (dict "name" "BACKEND_API_URL" "type" "config" "key" "BACKEND_API_URL")
-    )
-    "readiness" (dict "path" "/healthz" "port" "http" "initialDelaySeconds" 10 "periodSeconds" 10)
-    "liveness" (dict "path" "/healthz" "port" "http" "initialDelaySeconds" 30 "periodSeconds" 30)
-  )
-  (dict
-    "name" "backend-api"
-    "component" "backend-api"
-    "tier" "backend"
-    "replicas" $root.Values.replicaCount.backendApi
-    "image" (include "ocp-dog.image" $root.Values.images.backendApi)
-    "port" $root.Values.service.backendApi.targetPort
-    "portName" "http"
-    "env" (list
-      (dict "name" "DB_HOST" "type" "config" "key" "DB_HOST")
-      (dict "name" "DB_NAME" "type" "config" "key" "DB_NAME")
-      (dict "name" "DB_USER" "type" "secret" "key" "DB_USER" "secretSuffix" "db")
-      (dict "name" "DB_PASS" "type" "secret" "key" "DB_PASS" "secretSuffix" "db")
-    )
-    "readiness" (dict "path" "/healthz" "port" "http" "initialDelaySeconds" 15 "periodSeconds" 10)
-    "liveness" (dict "path" "/healthz" "port" "http" "initialDelaySeconds" 45 "periodSeconds" 30)
-  )
-  (dict
-    "name" "database"
-    "component" "database"
-    "tier" "database"
-    "replicas" $root.Values.replicaCount.database
-    "image" (include "ocp-dog.image" $root.Values.images.database)
-    "port" $root.Values.service.database.port
-    "portName" "tcp"
-    "env" (list
-      (dict "name" "POSTGRES_DB" "type" "config" "key" "DB_NAME")
-      (dict "name" "POSTGRES_USER" "type" "secret" "key" "DB_USER" "secretSuffix" "db")
-      (dict "name" "POSTGRES_PASSWORD" "type" "secret" "key" "DB_PASS" "secretSuffix" "db")
-    )
-  )
--}}
-{{- $lastIndex := sub (len $workloads) 1 -}}
-{{- range $idx, $workload := $workloads }}
+{{- range $idx, $name := $order }}
+{{- $svc := index $root.Values.service $name }}
+{{- $workload := default dict (index $root.Values.workloads $name) }}
+{{- $image := include "ocp-dog.image" (index $root.Values.images $name) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "ocp-dog.fullname" $root }}-{{ $workload.name }}
+  name: {{ include "ocp-dog.fullname" $root }}-{{ $svc.component }}
   labels:
     {{- include "ocp-dog.labels" $root | nindent 4 }}
-    tier: {{ $workload.tier }}
+    tier: {{ $svc.tier }}
 spec:
-  replicas: {{ $workload.replicas }}
+  replicas: {{ index $root.Values.replicaCount $name }}
   selector:
     matchLabels:
       app: {{ $root.Values.app.name }}
-      component: {{ $workload.component }}
+      component: {{ $svc.component }}
   template:
     metadata:
       labels:
         app: {{ $root.Values.app.name }}
-        component: {{ $workload.component }}
-        tier: {{ $workload.tier }}
+        component: {{ $svc.component }}
+        tier: {{ $svc.tier }}
     spec:
       containers:
-        - name: {{ $workload.component }}
-          image: {{ $workload.image }}
+        - name: {{ default $svc.component $workload.containerName }}
+          image: {{ $image }}
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: {{ $workload.port }}
-              name: {{ default "http" $workload.portName }}
-{{- if $workload.env }}
+            - containerPort: {{ $svc.targetPort }}
+              name: {{ default "http" $svc.portName }}
+{{- with $workload.env }}
           env:
-            {{- range $env := $workload.env }}
-            - name: {{ $env.name }}
-              {{- if $env.value }}
-              value: {{ $env.value | quote }}
-              {{- else if eq $env.type "config" }}
+            {{- range . }}
+            - name: {{ .name }}
+              {{- if .value }}
+              value: {{ .value | quote }}
+              {{- else if .configMapKey }}
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "ocp-dog.fullname" $root }}-config
-                  key: {{ $env.key }}
-              {{- else if eq $env.type "secret" }}
-              {{- $secretSuffix := default "db" $env.secretSuffix -}}
-              {{- $secretName := default (printf "%s-%s" (include "ocp-dog.fullname" $root) $secretSuffix) $env.secretName -}}
+                  key: {{ .configMapKey }}
+              {{- else if .secretKey }}
+              {{- $secretName := .secretName | default (printf "%s-%s" (include "ocp-dog.fullname" $root) (default "db" .secretNameSuffix)) }}
               valueFrom:
                 secretKeyRef:
                   name: {{ $secretName }}
-                  key: {{ $env.key }}
+                  key: {{ .secretKey }}
               {{- end }}
             {{- end }}
 {{- end }}
-{{- with $workload.readiness }}
+{{- with $workload.readinessProbe }}
           readinessProbe:
             httpGet:
               path: {{ .path }}
               port: {{ default "http" .port }}
-            {{- if .initialDelaySeconds }}
+            {{- if hasKey . "initialDelaySeconds" }}
             initialDelaySeconds: {{ .initialDelaySeconds }}
             {{- end }}
-            {{- if .periodSeconds }}
+            {{- if hasKey . "periodSeconds" }}
             periodSeconds: {{ .periodSeconds }}
             {{- end }}
 {{- end }}
-{{- with $workload.liveness }}
+{{- with $workload.livenessProbe }}
           livenessProbe:
             httpGet:
               path: {{ .path }}
               port: {{ default "http" .port }}
-            {{- if .initialDelaySeconds }}
+            {{- if hasKey . "initialDelaySeconds" }}
             initialDelaySeconds: {{ .initialDelaySeconds }}
             {{- end }}
-            {{- if .periodSeconds }}
+            {{- if hasKey . "periodSeconds" }}
             periodSeconds: {{ .periodSeconds }}
             {{- end }}
 {{- end }}
-{{- if lt $idx $lastIndex }}
+{{- if lt $idx $last }}
 ---
 {{- end }}
 {{- end }}
